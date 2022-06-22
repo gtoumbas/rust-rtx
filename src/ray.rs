@@ -26,3 +26,12 @@ impl Ray{
     }
 }
 
+impl Clone for Ray {
+    fn clone(&self) -> Ray {
+        Ray{orig: self.orig, dir: self.dir}
+    }
+}
+
+impl Copy for Ray {}
+
+
