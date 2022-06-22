@@ -5,9 +5,29 @@ mod vec3;
 mod ray;
 
 use vec3::Vec3;
-use ray::{Ray, ray_color};
+use ray::Ray;
 
+fn hit_sphere(center: Vec3, radius: f32, r: &Ray) -> bool {
+    let oc = r.orig() - center;
+    let a = r.dir().dot(&r.dir());
+    let b = 2.0 * oc.dot(&r.dir());
+    let c = oc.dot(&oc) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant > 0.0
 
+}
+
+pub fn ray_color(r: &Ray) -> Vec3 {
+    if hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r){
+        return Vec3::new(1.0, 0.0, 0.0)
+    }
+    let unit_dir = r.dir().unit_vector();
+    let t = 0.5 * (unit_dir.y() + 1.0);
+    let white = Vec3::new(1.0, 1.0, 1.0);
+    let blue = Vec3::new(0.5, 0.7, 1.0);
+    let white_shade = white * (1.0 - t) + blue * t;
+    white_shade
+}
 
 fn main() {
     
@@ -52,24 +72,6 @@ fn main() {
             pixel_color.write_color(&mut out);
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     // let vec1 = Vec3::new(1.0, 6.0, -3.0);

@@ -26,11 +26,3 @@ impl Ray{
     }
 }
 
-pub fn ray_color(r: &Ray) -> Vec3 {
-    let unit_dir = r.dir.unit_vector();
-    let t = 0.5 * (unit_dir.y() + 1.0);
-    let white = Vec3::new(1.0, 1.0, 1.0);
-    let blue = Vec3::new(0.5, 0.7, 1.0);
-    let white_shade = white * (1.0 - t) + blue * t;
-    white_shade
-}
