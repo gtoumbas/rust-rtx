@@ -5,39 +5,51 @@ mod vec3;
 mod ray;
 
 use vec3::Vec3;
-use ray::Ray;
+use ray::{Ray, ray_color};
 
 
 
 fn main() {
     
-    // Image dimensions 
-    let width = 256;
-    let height = 256;
+    // Image 
+    let aspect_ratio = 16.0 / 9.0;
+    let image_width = 400;
+    let image_height = (image_width as f32 / aspect_ratio) as i32;
 
-    
+    // Camera
+    let viewport_height = 2.0;
+    let viewport_width = aspect_ratio * viewport_height;
+    let focal_length = 1.0;
+
+    // Camera Origin
+    let origin = Vec3::new(0.0, 0.0, 0.0);
+    let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
+    let vertical = Vec3::new(0.0, viewport_height, 0.0);
+    let lower_left_corner = origin - horizontal/2.0 - vertical/2.0 - Vec3::new(0.0, 0.0, focal_length);
+
+
+    // Rendering 
+
     // Create a new image buffer
     let stdout = io::stdout();
     let mut stdout_handle = stdout.lock();
-
     let mut out = File::create("out.ppm").unwrap();
 
     // Write the header
     out.write_all(b"P3\n").unwrap();
-    out.write_all(format!("{} {}\n", width, height).as_bytes()).unwrap();
+    out.write_all(format!("{} {}\n", image_width, image_height).as_bytes()).unwrap();
     out.write_all(b"255\n").unwrap();
 
     // Write the image data
-    for y in (0..height).rev() {
+    for y in (0..image_height).rev() {
         // Progress bar sent to stdout
         stdout_handle.write_all(format!("\rScanlines Remaining {}", y).as_bytes()).unwrap();
-        for x in 0..width {
-            let r = x as f32 / width as f32;
-            let g = y as f32 / height as f32;
-            let b = 0.25;
-            let pixel = Vec3::new(r, g, b);
-            pixel.write_color(&mut out);
-            
+        for x in 0..image_width {
+            let u = x as f32 / image_width as f32;
+            let v = y as f32 / image_height as f32;
+            let r = Ray::new(origin, lower_left_corner + horizontal * u + vertical * v - origin);
+            let pixel_color = ray_color(&r);
+            pixel_color.write_color(&mut out);
         }
     }
 
@@ -58,7 +70,7 @@ fn main() {
 
 
 
-    
+
 
     // let vec1 = Vec3::new(1.0, 6.0, -3.0);
     // let vec2 = Vec3::new(-1.0, -1.0, -1.0);
