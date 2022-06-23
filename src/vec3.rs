@@ -2,6 +2,7 @@
 use std::fs::File;
 use std::io::{Write};
 use std::ops:: {Add, Sub, Mul, Div};
+use rand::Rng;
 
 #[derive(Debug)]
 pub struct Vec3 {
@@ -14,6 +15,10 @@ impl Vec3 {
 
     pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
         Vec3 { x: x, y: y, z: z }
+    }
+    
+    pub fn new_empty() -> Vec3 {
+        Vec3 { x: 0.0, y: 0.0, z: 0.0 }
     }
 
     
@@ -56,6 +61,8 @@ impl Vec3 {
 
     fn scale_rgb(c: f32, scale: f32) -> f32 {
         let mut s = c * scale;
+        // sqrt for gamma correction
+        s = s.sqrt();
         if s > 0.999 {
             s = 0.999;
         }
@@ -79,15 +86,15 @@ impl Vec3 {
 
 
         out.write_all(format!("{} {} {}\n", ir, ig, ib).as_bytes()).unwrap();
-
-        // let scaled_r = (r * scale).clamp(0.0, 0.999) * 256.0;
-        // let scaled_g = (g * scale).clamp(0.0, 0.999) * 256.0;
-        // let scaled_b = (b * scale).clamp(0.0, 0.999) * 256.0;
-
-        // out.write_all(format!("{} {} {}\n", scaled_r, scaled_g, scaled_b).as_bytes()).unwrap();
-        
-        // out.write_all(format!("{} {} {}\n", r, g, b).as_bytes()).unwrap();
     }
+
+    pub fn near_zero(&self) -> bool {
+        let epsilon = 0.00000001;
+        return (self.x().abs() < epsilon) && (self.y().abs() < epsilon) && (self.z().abs() < epsilon);
+    }
+
+ 
+
 }
 
 // Overloading +, -, *, / operators for Vec3
@@ -124,6 +131,14 @@ impl Mul<f32> for Vec3 {
     }
 }
 
+impl Mul<Vec3> for f32 {
+    type Output = Vec3;
+
+    fn mul(self, vec: Vec3) -> Vec3 {
+        Vec3::new(self * vec.x(), self * vec.y(), self * vec.z())
+    }
+}
+
 impl Div for Vec3 {
     type Output = Vec3;
 
@@ -149,3 +164,40 @@ impl Clone for Vec3 {
 
 // Implement copy
 impl Copy for Vec3 {}
+
+
+
+pub fn random() -> Vec3 {
+    let x = rand::random::<f32>();
+    let y = rand::random::<f32>();
+    let z = rand::random::<f32>();
+    Vec3::new(x, y, z)
+}
+
+pub fn random_range(min: f32, max: f32) -> Vec3 {
+    let mut rng = rand::thread_rng();
+    let x = rng.gen_range(min..max);
+    let y = rng.gen_range(min..max);
+    let z = rng.gen_range(min..max);
+
+    Vec3::new(x, y, z)
+}
+
+pub fn rand_in_unit_sphere() -> Vec3 {
+    let mut p: Vec3;
+    loop {
+        p = random_range(-1.0, 1.0);
+        if p.len_squared() < 1.0 {
+            break;
+        }
+    }
+    p.unit_vector()
+}
+
+pub fn rand_unit_vector() -> Vec3 {
+    rand_in_unit_sphere().unit_vector()
+}
+
+pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+    v - 2.0 * v.dot(&n) * n
+}

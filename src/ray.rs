@@ -13,6 +13,10 @@ impl Ray{
         Ray{orig: orig, dir: dir}
     }
 
+    pub fn new_empty() -> Ray{
+        Ray{orig: Vec3::new_empty(), dir: Vec3::new_empty()}
+    }
+
     pub fn orig (&self) -> &Vec3{
         &self.orig
     }
