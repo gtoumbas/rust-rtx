@@ -54,12 +54,39 @@ impl Vec3 {
         Vec3::new(self.x() / l, self.y() / l, self.z() / l)
     }
 
-    // function to write the Vec3 to a ppm file
-    pub fn write_color(&self, out: &mut File) {
-        let r = (self.x() * 255.999) as f32;
-        let g = (self.y() * 255.999) as f32;
-        let b = (self.z() * 255.999) as f32;
-        out.write_all(format!("{} {} {}\n", r, g, b).as_bytes()).unwrap();
+    fn scale_rgb(c: f32, scale: f32) -> f32 {
+        let mut s = c * scale;
+        if s > 0.999 {
+            s = 0.999;
+        }
+        if s < 0.0 {
+            s = 0.0;
+        }
+
+        s * 256.0
+    }
+
+    // might be better to place in different file
+    pub fn write_color(&self, out: &mut File, samples_per_pixel: u32) {
+        let r = self.x();
+        let g = self.y();
+        let b = self.z();
+
+        let scale = 1.0 / samples_per_pixel as f32;
+        let ir = Self::scale_rgb(r, scale);
+        let ig = Self::scale_rgb(g, scale);
+        let ib = Self::scale_rgb(b, scale);
+
+
+        out.write_all(format!("{} {} {}\n", ir, ig, ib).as_bytes()).unwrap();
+
+        // let scaled_r = (r * scale).clamp(0.0, 0.999) * 256.0;
+        // let scaled_g = (g * scale).clamp(0.0, 0.999) * 256.0;
+        // let scaled_b = (b * scale).clamp(0.0, 0.999) * 256.0;
+
+        // out.write_all(format!("{} {} {}\n", scaled_r, scaled_g, scaled_b).as_bytes()).unwrap();
+        
+        // out.write_all(format!("{} {} {}\n", r, g, b).as_bytes()).unwrap();
     }
 }
 
