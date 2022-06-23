@@ -7,31 +7,30 @@ mod hittable;
 
 use vec3::Vec3;
 use ray::Ray;
+use hittable:: {HittableList, HitRecord, Sphere, Hittable};
 
-fn hit_sphere(center: Vec3, radius: f32, r: &Ray) -> f32 {
-    let oc = *r.orig() - center;
-    let a = r.dir().len_squared();
-    let half_b = oc.dot(r.dir());
-    let c = oc.len_squared() - radius * radius;
-    let discriminant = half_b * half_b - a * c;
-    if discriminant < 0.0 {
-        return -1.0;
-    }
-    (-half_b - discriminant.sqrt()) / a
-}
+// fn hit_sphere(center: Vec3, radius: f32, r: &Ray) -> f32 {
+//     let oc = *r.orig() - center;
+//     let a = r.dir().len_squared();
+//     let half_b = oc.dot(r.dir());
+//     let c = oc.len_squared() - radius * radius;
+//     let discriminant = half_b * half_b - a * c;
+//     if discriminant < 0.0 {
+//         return -1.0;
+//     }
+//     (-half_b - discriminant.sqrt()) / a
+// }
 
-pub fn ray_color(r: &Ray) -> Vec3 {
-    let mut t = hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r);
-    if t > 0.0 {
-        let N = (r.at(t) - Vec3::new(0.0, 0.0, -1.0)).unit_vector();
-        return Vec3::new(N.x()*0.5 + 1.0, N.y() + 1.0, N.z() + 1.0);
+pub fn ray_color(r: &Ray, world: &HittableList) -> Vec3 {
+    let mut rec = HitRecord::new(0.0, Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0), false);
+
+    if world.hit(r, 0.001, std::f32::INFINITY, &mut rec) {
+        return (rec.normal() + Vec3::new(1.0, 1.0, 1.0)) * 0.5;
     }
-    let unit_dir = r.dir().unit_vector();
-    t = 0.5 * (unit_dir.y() + 1.0);
-    let white = Vec3::new(1.0, 1.0, 1.0);
-    let blue = Vec3::new(0.5, 0.7, 1.0);
-    let white_shade = white * (1.0 - t) + blue * t;
-    white_shade
+    let unit_direction = r.dir().unit_vector();
+    let t = 0.5 * (unit_direction.y() + 1.0);
+    Vec3::new(1.0, 1.0, 1.0) *  (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
+        
 }
 
 fn main() {
@@ -40,6 +39,13 @@ fn main() {
     let aspect_ratio = 16.0 / 9.0;
     let image_width = 400;
     let image_height = (image_width as f32 / aspect_ratio) as i32;
+
+    // World 
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
+
+
 
     // Camera
     let viewport_height = 2.0;
@@ -73,7 +79,7 @@ fn main() {
             let u = x as f32 / image_width as f32;
             let v = y as f32 / image_height as f32;
             let r = Ray::new(origin, lower_left_corner + horizontal * u + vertical * v - origin);
-            let pixel_color = ray_color(&r);
+            let pixel_color = ray_color(&r, &world);
             pixel_color.write_color(&mut out);
         }
     }
