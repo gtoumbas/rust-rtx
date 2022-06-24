@@ -1,7 +1,8 @@
-use std::io::{self, Write};
+use std::io::{Write};
 use std::fs::File;
 use std::rc::Rc;
 use rand;
+use tqdm_rs;
 
 mod vec3;
 mod ray;
@@ -9,7 +10,7 @@ mod hittable;
 mod camera;
 mod material;
 
-use vec3::{Vec3, rand_unit_vector};
+use vec3::{Vec3};
 use ray::Ray;
 use hittable:: {HittableList, HitRecord, Sphere, Hittable};
 use camera::Camera;
@@ -43,7 +44,7 @@ fn main() {
     
     // Image 
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 400;
+    let image_width = 1200;
     let image_height = (image_width as f32 / aspect_ratio) as i32;
     let samples_per_pixel = 100;
     let max_depth = 50;
@@ -77,8 +78,6 @@ fn main() {
     // Rendering 
 
     // Create a new image buffer
-    let stdout = io::stdout();
-    let mut stdout_handle = stdout.lock();
     let mut out = File::create("out.ppm").unwrap();
 
     // Write the header
@@ -87,9 +86,8 @@ fn main() {
     out.write_all(b"255\n").unwrap();
 
     // Write the image data
-    for y in (0..image_height).rev() {
-        // Progress bar sent to stdout
-        stdout_handle.write_all(format!("\rScanlines Remaining {}", y).as_bytes()).unwrap();
+    for y in tqdm_rs::Tqdm::new((0..image_height).rev()) {
+        // tqdm_rs::write(&format!("Scanlines remaining: {}", y));
         for x in 0..image_width {
             let mut pixel_color = Vec3::new(0.0, 0.0, 0.0);
             for _ in 0..samples_per_pixel {
